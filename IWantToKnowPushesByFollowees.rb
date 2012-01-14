@@ -1,3 +1,4 @@
+require 'date'
 require 'json'
 require 'net/https'
 require 'open-uri'
@@ -6,9 +7,12 @@ require 'pp'
 module IWantToKnowPushesByFollowees
   class Accessor
     def doit(user)
+      filter = EventFilter.new
       Printer.new.print_all do |printer|
         each_following_public_event(user) do |event|
-          printer.print(event)
+          filter.filter(event) do |event|
+            printer.print(event)
+          end
         end
       end
     end
@@ -79,7 +83,6 @@ module IWantToKnowPushesByFollowees
     end
 
     def print(event)
-      event['type'] != 'PushEvent' && return
       templ = "<p div='event'>%s %s %s %s\n</p>"
       link = url_to_link(event['repo']['url'])
       $stdout.printf(templ, event['actor']['login'], event['type'],
@@ -90,9 +93,24 @@ module IWantToKnowPushesByFollowees
       return sprintf("<a href='%s'>%s</a>", url, File.basename(url))
     end
 
+    def datestr_to_date(date)
+      time = DateTime::parse(date)
+      return time.iso8601
+    end
+
     def print_foot
       puts('</body>')
       puts('</html>')
+    end
+  end
+
+  class EventFilter
+    def filter(event) #block
+      event['type'] != 'PushEvent' && return
+      time = DateTime::parse(event['created_at'])
+      now = DateTime.now
+      now.to_time - time.to_time > 60.0 * 60 * 24 * 7 && return
+      yield event
     end
   end
 end
