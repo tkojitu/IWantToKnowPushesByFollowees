@@ -1,8 +1,6 @@
 require 'date'
 require 'json'
 require 'net/https'
-require 'open-uri'
-require 'pp'
 
 module IWantToKnowPushesByFollowees
   class Accessor
