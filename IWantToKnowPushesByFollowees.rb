@@ -85,8 +85,9 @@ module IWantToKnowPushesByFollowees
     def print(event)
       templ = "<p div='event'>%s %s %s %s\n</p>"
       link = url_to_link(event['repo']['url'])
+      date = event['created_at'].gsub(/[TZ]/, ' ')
       $stdout.printf(templ, event['actor']['login'], event['type'],
-                     link, event['created_at'])
+                     link, date)
     end
 
     def url_to_link(url)
