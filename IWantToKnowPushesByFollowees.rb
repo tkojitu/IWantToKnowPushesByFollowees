@@ -83,11 +83,34 @@ module IWantToKnowPushesByFollowees
     end
 
     def print(event)
-      templ = "<p div='event'>%s %s %s %s\n</p>"
-      link = url_to_link(event['repo']['url'])
+      templ = "<p div='event'>%s %s %s at %s\n</p>"
+      actor_link = actor_url_to_link(event['actor']['url'])
+      verb = event_to_verb(event)
+      repo_link = repo_url_to_link(event['repo']['url'])
       date = event['created_at'].gsub(/[TZ]/, ' ')
-      $stdout.printf(templ, event['actor']['login'], event['type'],
-                     link, date)
+      $stdout.printf(templ, actor_link, verb,
+                     repo_link, date)
+    end
+
+    def event_to_verb(event)
+      case event['type']
+      when 'PushEvent'
+        return 'pushed'
+      else
+        return 'dit something'
+      end
+    end
+
+    def actor_url_to_link(url)
+      str = url.sub(/api\./, '')
+      str = str.sub(/\/users\//, '/')
+      return url_to_link(str)
+    end
+
+    def repo_url_to_link(url)
+      str = url.sub(/api\./, '')
+      str = str.sub(/\/repos\//, '/')
+      return url_to_link(str)
     end
 
     def url_to_link(url)
