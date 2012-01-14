@@ -81,8 +81,13 @@ module IWantToKnowPushesByFollowees
     def print(event)
       event['type'] != 'PushEvent' && return
       templ = "<p div='event'>%s %s %s %s\n</p>"
+      link = url_to_link(event['repo']['url'])
       $stdout.printf(templ, event['actor']['login'], event['type'],
-                     event['repo']['url'], event['created_at'])
+                     link, event['created_at'])
+    end
+
+    def url_to_link(url)
+      return sprintf("<a href='%s'>%s</a>", url, File.basename(url))
     end
 
     def print_foot
