@@ -16,12 +16,6 @@ class IWantToKnowPushesByFollowees
     end
   end
 
-  def get_urls
-    start_api do |access|
-      return get_following_urls(access)
-    end
-  end
-
   def get_following_urls(user, access)
     urls = []
     page_number = 1
