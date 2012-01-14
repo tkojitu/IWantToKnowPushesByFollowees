@@ -1,24 +1,33 @@
 require 'json'
 require 'net/https'
 require 'open-uri'
+require 'pp'
 
 class IWantToKnowPushesByFollowees
-  def initialize(follower)
-    @follower = follower
-  end
-
-  def get_urls
-    start_api do |https|
-      return get_following_urls(https)
+  def doit(user)
+    events = []
+    start_api do |access|
+      urls = get_following_urls(user, access)
+      events = get_push_events(access, urls)
+    end
+    events.each do |event|
+      $stdout.printf("%s %s %s %s\n", event['actor']['login'], event['type'],
+                     event['repo']['url'], event['created_at'])
     end
   end
 
-  def get_following_urls(https)
+  def get_urls
+    start_api do |access|
+      return get_following_urls(access)
+    end
+  end
+
+  def get_following_urls(user, access)
     urls = []
     page_number = 1
     while true
-      urls_page = get_urls_by_page(https, page_number)
-      break if urls_page.empty?
+      urls_page = get_urls_by_page(user, access, page_number)
+      urls_page.empty? && break
       urls.concat(urls_page)
       page_number += 1
     end
@@ -35,19 +44,35 @@ class IWantToKnowPushesByFollowees
     end
   end
 
-  def get_urls_by_page(https, page_number)
-    followings = get_followings_by_page(https, page_number)
+  def get_urls_by_page(user, access, page_number)
+    followings = get_followings_by_page(user, access, page_number)
     return followings.collect{|f| f['url']}
   end
 
-  def get_followings_by_page(https, page_number)
-    path = sprintf('/users/%s/following?page=%d', @follower, page_number)
-    response = https.get(path)
+  def get_followings_by_page(user, access, page_number)
+    path = sprintf('/users/%s/following?page=%d', user, page_number)
+    response = access.get(path)
+    return JSON.load(response.body)
+  end
+
+  def get_push_events(access, urls)
+    events = []
+    urls.each do |url|
+      public_events = get_public_events(access, url)
+      public_events.delete_if{|event| event['type'] != 'PushEvent'}
+      !public_events.empty? && events.concat(public_events)
+    end
+    return events
+  end
+
+  def get_public_events(access, url)
+    path = url + '/events/public'
+    response = access.get(path)
     return JSON.load(response.body)
   end
 end
 
 if $0 == __FILE__
   app = IWantToKnowPushesByFollowees.new('tkojitu')
-  p app.get_urls[0]
+  app.doit('tkojitu')
 end
