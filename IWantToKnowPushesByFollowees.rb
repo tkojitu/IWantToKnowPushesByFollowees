@@ -5,27 +5,14 @@ require 'pp'
 
 class IWantToKnowPushesByFollowees
   def doit(user)
-    events = []
     start_api do |access|
-      urls = get_following_urls(user, access)
-      events = get_push_events(access, urls)
+      each_following_url(user, access) do |url|
+        each_push_event(access, url) do |event|
+          $stdout.printf("%s %s %s %s\n", event['actor']['login'], event['type'],
+                         event['repo']['url'], event['created_at'])
+        end
+      end
     end
-    events.each do |event|
-      $stdout.printf("%s %s %s %s\n", event['actor']['login'], event['type'],
-                     event['repo']['url'], event['created_at'])
-    end
-  end
-
-  def get_following_urls(user, access)
-    urls = []
-    page_number = 1
-    while true
-      urls_page = get_urls_by_page(user, access, page_number)
-      urls_page.empty? && break
-      urls.concat(urls_page)
-      page_number += 1
-    end
-    return urls
   end
 
   def start_api #block
@@ -35,6 +22,16 @@ class IWantToKnowPushesByFollowees
     https.verify_depth = 5
     https.start do |h|
       yield h
+    end
+  end
+
+  def each_following_url(user, access) #block
+    page_number = 1
+    while true
+      urls = get_urls_by_page(user, access, page_number)
+      urls.empty? && break
+      urls.each{|url| yield url}
+      page_number += 1
     end
   end
 
@@ -49,14 +46,10 @@ class IWantToKnowPushesByFollowees
     return JSON.load(response.body)
   end
 
-  def get_push_events(access, urls)
-    events = []
-    urls.each do |url|
-      public_events = get_public_events(access, url)
-      public_events.delete_if{|event| event['type'] != 'PushEvent'}
-      !public_events.empty? && events.concat(public_events)
-    end
-    return events
+  def each_push_event(access, url) #block
+    events = get_public_events(access, url)
+    events.delete_if{|event| event['type'] != 'PushEvent'}
+    events.each{|event| yield event}
   end
 
   def get_public_events(access, url)
