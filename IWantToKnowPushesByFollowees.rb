@@ -5,11 +5,18 @@ require 'pp'
 
 class IWantToKnowPushesByFollowees
   def doit(user)
+    each_following_public_event(user) do |event|
+      event['type'] != 'PushEvent' && next
+      $stdout.printf("%s %s %s %s\n", event['actor']['login'], event['type'],
+                     event['repo']['url'], event['created_at'])
+    end
+  end
+
+  def each_following_public_event(user) #block
     start_api do |access|
       each_following_url(user, access) do |url|
-        each_push_event(access, url) do |event|
-          $stdout.printf("%s %s %s %s\n", event['actor']['login'], event['type'],
-                         event['repo']['url'], event['created_at'])
+        each_public_event(access, url) do |event|
+          yield event
         end
       end
     end
@@ -46,9 +53,8 @@ class IWantToKnowPushesByFollowees
     return JSON.load(response.body)
   end
 
-  def each_push_event(access, url) #block
+  def each_public_event(access, url) #block
     events = get_public_events(access, url)
-    events.delete_if{|event| event['type'] != 'PushEvent'}
     events.each{|event| yield event}
   end
 
