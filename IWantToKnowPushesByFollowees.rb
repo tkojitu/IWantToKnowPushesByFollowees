@@ -6,17 +6,6 @@ require 'pp'
 
 module IWantToKnowPushesByFollowees
   class Accessor
-    def doit(user)
-      filter = EventFilter.new
-      Printer.new.print_all do |printer|
-        each_following_public_event(user) do |event|
-          filter.filter(event) do |event|
-            printer.print(event)
-          end
-        end
-      end
-    end
-
     def each_following_public_event(user) #block
       start_api do |access|
         each_following_url(user, access) do |url|
@@ -83,7 +72,7 @@ module IWantToKnowPushesByFollowees
     end
 
     def print(event)
-      templ = "<p div='event'>%s %s %s at %s\n</p>"
+      templ = "<p>%s %s %s at %s\n</p>"
       actor_link = actor_url_to_link(event['actor']['url'])
       verb = event_to_verb(event)
       repo_link = repo_url_to_link(event['repo']['url'])
@@ -140,6 +129,14 @@ module IWantToKnowPushesByFollowees
 end
 
 if $0 == __FILE__
-  app = IWantToKnowPushesByFollowees::Accessor.new('tkojitu')
-  app.doit('tkojitu')
+  include IWantToKnowPushesByFollowees
+  acc = Accessor.new('tkojitu')
+  filter = EventFilter.new
+  Printer.new.print_all do |printer|
+    acc.each_following_public_event(ARGV[0]) do |event|
+      filter.filter(event) do |event|
+        printer.print(event)
+      end
+    end
+  end
 end
