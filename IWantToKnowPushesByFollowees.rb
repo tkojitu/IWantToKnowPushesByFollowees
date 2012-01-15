@@ -128,7 +128,7 @@ end
 
 if $0 == __FILE__
   include IWantToKnowPushesByFollowees
-  acc = Accessor.new('tkojitu')
+  acc = Accessor.new
   filter = EventFilter.new
   Printer.new.print_all do |printer|
     acc.each_following_public_event(ARGV[0]) do |event|
