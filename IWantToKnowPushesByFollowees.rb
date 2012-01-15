@@ -1,3 +1,4 @@
+#!ruby
 require 'cgi'
 require 'date'
 require 'json'
@@ -141,7 +142,7 @@ module IWantToKnowPushesByFollowees
     end
 
     def print_http_header
-      @cgi.stdoutput.print("Content-Type: text/html; charset=UTF-8\r\n\r\n")
+      $stdout.print("Content-Type: text/html; charset=UTF-8\r\n\r\n")
     end
 
     def get_user
@@ -149,8 +150,9 @@ module IWantToKnowPushesByFollowees
     end
 
     def print_html(user)
+      acc = Accessor.new
       filter = EventFilter.new
-      Printer.new(@cgi.stdoutput).print_all do |printer|
+      Printer.new($stdout).print_all do |printer|
         acc.each_following_public_event(user) do |event|
           filter.filter(event) do |event|
             printer.print(event)
