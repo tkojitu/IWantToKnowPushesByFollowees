@@ -1,3 +1,4 @@
+require 'cgi'
 require 'date'
 require 'json'
 require 'net/https'
@@ -58,6 +59,10 @@ module IWantToKnowPushesByFollowees
   end
 
   class Printer
+    def initialize(output=$stdout)
+      @output = output
+    end
+
     def print_all #block
       print_head
       yield self
@@ -65,8 +70,8 @@ module IWantToKnowPushesByFollowees
     end
 
     def print_head
-      puts('<html>')
-      puts('<body>')
+      @output.puts('<html>')
+      @output.puts('<body>')
     end
 
     def print(event)
@@ -75,8 +80,7 @@ module IWantToKnowPushesByFollowees
       verb = event_to_verb(event)
       repo_link = repo_url_to_link(event['repo']['url'])
       date = event['created_at'].gsub(/[TZ]/, ' ')
-      $stdout.printf(templ, actor_link, verb,
-                     repo_link, date)
+      @output.printf(templ, actor_link, verb, repo_link, date)
     end
 
     def event_to_verb(event)
@@ -110,8 +114,8 @@ module IWantToKnowPushesByFollowees
     end
 
     def print_foot
-      puts('</body>')
-      puts('</html>')
+      @output.puts('</body>')
+      @output.puts('</html>')
     end
   end
 
