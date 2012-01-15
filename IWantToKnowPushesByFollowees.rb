@@ -129,6 +129,37 @@ module IWantToKnowPushesByFollowees
     end
   end
 
+  class WebApp
+    def initialize(cgi)
+      @cgi = cgi
+    end
+
+    def main
+      print_http_header
+      user = get_user
+      print_html(user)
+    end
+
+    def print_http_header
+      @cgi.stdoutput.print("Content-Type: text/html; charset=UTF-8\r\n\r\n")
+    end
+
+    def get_user
+      return @cgi.has_key?('user') ? @cgi['user'] : 'tkojitu'
+    end
+
+    def print_html(user)
+      filter = EventFilter.new
+      Printer.new(@cgi.stdoutput).print_all do |printer|
+        acc.each_following_public_event(user) do |event|
+          filter.filter(event) do |event|
+            printer.print(event)
+          end
+        end
+      end
+    end
+  end
+
   def desktop_main
     acc = Accessor.new
     filter = EventFilter.new
@@ -142,7 +173,11 @@ module IWantToKnowPushesByFollowees
   end
 end
 
-if $0 == __FILE__
+if ENV['SCRIPT_FILENAME'] &&
+    File.basename(ENV['SCRIPT_FILENAME']) == File.basename(__FILE__)
+  include IWantToKnowPushesByFollowees
+  WebApp.new(CGI.new).main
+elsif $0 == __FILE__
   include IWantToKnowPushesByFollowees
   desktop_main
 end
