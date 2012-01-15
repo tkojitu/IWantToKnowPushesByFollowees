@@ -128,17 +128,21 @@ module IWantToKnowPushesByFollowees
       yield event
     end
   end
+
+  def desktop_main
+    acc = Accessor.new
+    filter = EventFilter.new
+    Printer.new.print_all do |printer|
+      acc.each_following_public_event(ARGV[0]) do |event|
+        filter.filter(event) do |event|
+          printer.print(event)
+        end
+      end
+    end
+  end
 end
 
 if $0 == __FILE__
   include IWantToKnowPushesByFollowees
-  acc = Accessor.new
-  filter = EventFilter.new
-  Printer.new.print_all do |printer|
-    acc.each_following_public_event(ARGV[0]) do |event|
-      filter.filter(event) do |event|
-        printer.print(event)
-      end
-    end
-  end
+  desktop_main
 end
